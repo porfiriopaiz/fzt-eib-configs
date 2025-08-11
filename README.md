@@ -49,13 +49,13 @@ To build an Endless OS image using the configurations defined in this directory,
 **Standard Build Command:**
 
 ```bash
-sudo ./eos-image-builder --localdir ~/fzt-eib-configs --product eos --personality base --arch amd64 master
+sudo ./eos-image-builder --localdir ../fzt-eib-configs --product eos --personality base --arch amd64 master
 ```
 
 ### Command Breakdown:
 
   * **`sudo ./eos-image-builder`**: Invokes the Endless Image Builder script. `sudo` is often required for disk image creation and manipulation.
-  * **`--localdir ~/fzt-eib-configs`**: Tells the EIB to load additional configuration files from the `fzt-eib-configs` directory. This path is relative to where you execute the `eos-image-builder` script.
+  * **`--localdir ../fzt-eib-configs`**: Tells the EIB to load additional configuration files from the `fzt-eib-configs` directory. This path is relative to where you execute the `eos-image-builder` script.
   * **`--product eos`**: Specifies the "eos" product configuration. The EIB will look for `config/product/eos.ini` in both the main EIB source and your local `fzt-eib-configs/config/product/` directory.
   * **`--personality base`**: Specifies the "base" image personality. The EIB will load `config/personality/base.ini`.
   * **`--arch amd64`**: Specifies the `amd64` architecture. The EIB will load `config/arch/amd64.ini`.
@@ -68,7 +68,7 @@ sudo ./eos-image-builder --localdir ~/fzt-eib-configs --product eos --personalit
 To see a list of applications that will be installed with the image based on your current configuration, use the `--show-apps` option:
 
 ```bash
-sudo ./eos-image-builder --show-apps --localdir ~/fzt-eib-configs --product eos --personality base --arch amd64 master
+sudo ./eos-image-builder --show-apps --localdir ../fzt-eib-configs --product eos --personality base --arch amd64 master
 ```
 
 This command will output the names and sizes of the Flatpak applications included in the build, allowing you to verify what's being installed. You can also use `--trim BYTES` with `--show-apps` to filter the list by minimum size.
