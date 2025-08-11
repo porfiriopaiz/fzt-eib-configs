@@ -1,0 +1,58 @@
+# Example local configuration. When installed as local.ini, it can be
+# used to override any other settings for the configured image variant.
+# This is primarily useful when testing changes to the image builder or
+# producing a one time custom image.
+#
+# Below are some settings that are typically useful in this case, but
+# all options are available to be changed. See defaults.ini for
+# descriptions of the options.
+
+[image]
+# Skip GPG signing of the completed image files since the default key ID
+# isn't available. Alternatively, the key ID for any private key in the
+# GPG homedir at /etc/eos-image-builder/gnupg.
+signing_keyid =
+
+# Most people probably do not need VM images when building locally. Disabling
+# by default to save storage and time.
+vm_image = false
+
+# Some products are compressed with xz, trading the one-time cost of
+# substantially slower image builds for substantially smaller image
+# files. When testing locally, you probably don't care how big the image
+# file is, but you'd probably like it to build quickly.
+compression = gz
+
+# One may want to completely disable flatpaks for local builds to save storage
+# and time. Also, disabling flatpak support may increase the changes of a
+# successful build.
+#[flatpak]
+#enable = false
+
+[flatpak-remote-eos-apps]
+# Completely override the set of installed EOS apps for testing. This will
+# take precedence over all other image variant configuration. This can
+# be useful if the exact app set is known or if the build is for testing
+# and the full multi-gigabyte app set is not needed.
+apps =
+  com.endlessm.resume
+
+# Alternatively, a set of apps can be added or deleted from the existing
+# configuration by using the _add_/_del_ merged settings. The above
+# install option would need to be commented out for these to take
+# effect.
+#apps_add = org.my.App
+#apps_del = com.endlessm.resume
+
+[flatpak-remote-flathub]
+# Completely override the set of installed Flathub apps. See documentation
+# for eos-apps above.
+apps =
+  com.endlessm.photos
+
+[buildroot]
+# The buildroot is generated using packages on the internal OBS repos,
+# which requires VPN access. This is not implemented yet, but running
+# builds outside the SF office would be better to use a public package
+# mirror.
+#repo = http://non-existent-mirror.endlessm.com/eos
