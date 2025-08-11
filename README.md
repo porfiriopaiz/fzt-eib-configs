@@ -1,5 +1,3 @@
-Here's an improved `README.md` for your `fzt-eib-configs` directory. This version provides a clearer purpose, explains the directory's role, and includes more comprehensive usage instructions.
-
 # fzt-eib-configs 🛠️
 
 This directory serves as the **local configuration hub** for building Endless OS images using the Endless Image Builder (EIB). It allows for **customization and overrides** of the default EIB settings without modifying the main EIB source repository.
