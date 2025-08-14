@@ -1,0 +1,20 @@
+#!/bin/bash
+echo "Copying first-run service and script to image..."
+
+# Create the necessary directories inside the image.
+mkdir -p /etc/systemd/system
+mkdir -p /usr/local/bin
+
+# Download the service file directly into the image's systemd directory (one-liner).
+wget -O /etc/systemd/system/my-first-run.service https://raw.githubusercontent.com/porfiriopaiz/fzt-eib-configs/refs/heads/fix/root-config/etc/systemd/system/my-first-run.service
+
+# Download the bash script directly into the image's local bin directory (one-liner).
+wget -O /usr/local/bin/my-first-run.sh https://raw.githubusercontent.com/porfiriopaiz/fzt-eib-configs/refs/heads/fix/root-config/usr/local/bin/my-first-run.sh
+
+# Enable the service for the next boot.
+# Note: The systemd daemon itself is not running during this hook. This command
+# simply creates the necessary symlink for the service to be enabled on the
+# first real boot of the system.
+ln -s /etc/systemd/system/my-first-run.service /etc/systemd/system/multi-user.target.wants/
+
+echo "First-run service enabled."
