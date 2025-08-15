@@ -5,16 +5,47 @@ echo "Copying first-run service and script to image..."
 mkdir -p /etc/systemd/system
 mkdir -p /usr/local/bin
 
-# Download the service file directly into the image's systemd directory (one-liner).
-wget -O /etc/systemd/system/my-first-run.service https://raw.githubusercontent.com/porfiriopaiz/fzt-eib-configs/refs/heads/fix/root-config/etc/systemd/system/my-first-run.service
+# Creates the systemd service that triggers the script to collect the serial
+# number on OLPC devices
+cat > /etc/systemd/system/olpc-sn-collector.service <<EOF
+[Unit]
+Description=Collects OLPC device serial number
+Wants=network-online.target
+After=network-online.target
 
-# Download the bash script directly into the image's local bin directory (one-liner).
-wget -O /usr/local/bin/my-first-run.sh https://raw.githubusercontent.com/porfiriopaiz/fzt-eib-configs/refs/heads/fix/root-config/usr/local/bin/my-first-run.sh
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/olpc-sn-collector
+RemainAfterExit=yes
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Creates the script that collects the serial number of OLPC devices
+cat > /usr/local/bin/olpc-sn-collector <<EOF
+#!/bin/bash
+
+# Check if the task has already been run.
+if [ -f /var/lib/olpc-sn-collector.done ]; then
+    echo "olpc-sn-collector script has already executed. Exiting."
+    exit 0
+fi
+
+# Your one-time task goes here.
+echo "Running olpc-sn-collector one-time startup task with internet connection..."
+cat /sys/class/dmi/id/product_serial > /tmp/device-sn.txt
+
+# Mark the task as complete so it doesn't run again.
+touch /var/lib/olpc-sn-collector.done
+EOF
+chmod +x /usr/local/bin/olpc-sn-collector
 
 # Enable the service for the next boot.
 # Note: The systemd daemon itself is not running during this hook. This command
 # simply creates the necessary symlink for the service to be enabled on the
 # first real boot of the system.
-ln -s /etc/systemd/system/my-first-run.service /etc/systemd/system/multi-user.target.wants/
+ln -s /etc/systemd/system/olpc-sn-collector.service /etc/systemd/system/multi-user.target.wants/
 
 echo "First-run service enabled."
