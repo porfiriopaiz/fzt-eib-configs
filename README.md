@@ -1,74 +1,102 @@
 # fzt-eib-configs 🛠️
 
-This directory serves as the **local configuration hub** for building Endless OS images using the Endless Image Builder (EIB). It allows for **customization and overrides** of the default EIB settings without modifying the main EIB source repository.
-
-Keeping your configurations here ensures that your custom build settings are **separate and easily manageable**, especially when updating the core EIB repository.
-
------
+This directory serves as a **local configuration hub** for building Endless OS images using the Endless Image Builder (EIB). It allows for **customization and overrides** of default EIB settings without modifying the main EIB source repository. This approach keeps your custom build settings **separate and manageable**, especially when updating the core EIB repository. The project is licensed under the **GNU General Public License (GPL) v2**.
 
 ## 📂 Directory Structure
 
-This `fzt-eib-configs` directory is designed to mirror the `config/` and `data/` structures found in the main Endless Image Builder repository. This mirroring enables **specific overrides** for existing EIB settings, allowing for fine-grained control over your image builds.
+This `fzt-eib-configs` directory is designed to mirror the `config/` and `hooks/` structures found in the main Endless Image Builder repository, enabling **specific overrides** for existing EIB settings.
 
 ```
 fzt-eib-configs/
-├── config/                  # Contains configuration files for overriding EIB defaults
-│   ├── local.ini            # Primary file for general build-specific overrides
-│   ├── private.ini          # (Optional) For sensitive information, not for version control
-│   ├── schema.ini           # (Optional) For custom configuration schema definitions
-│   ├── arch/                # (Optional) For custom architecture-specific overrides (e.g., amd64.ini)
-│   ├── branch/              # (Optional) For custom branch-specific overrides (e.g., master.ini)
-│   ├── personality/         # (Optional) For custom personality-specific overrides (e.g., base.ini)
-│   ├── platform/            # (Optional) For custom platform-specific overrides
-│   └── product/             # (Optional) For custom product-specific overrides (e.g., eos.ini)
-│   └── product-personality/ # (Optional) For custom product-personality combinations (e.g., eos-base.ini)
-├── buildscript/             # Contains custom build scripts and hooks
-│   └── hooks/               # Place custom EIB hooks here
-│       └── post-install.sh  # Example: A hook to inject files into the image's root filesystem
-└── root-config/             # Files within this directory will be copied directly into the image's root (/) filesystem
-    ├── etc/                 # Example: Place custom systemd services or configuration files here
-    │   └── systemd/
-    │       └── system/
-    │           └── my-first-run.service
-    └── usr/                 # Example: Place custom scripts or binaries here
-        └── local/
-            └── bin/
-                └── my-first-run.sh
+├── hooks/
+│   └── image/
+│       └── 51-sn-collector.chroot  # A hook to collect serial numbers on first boot
+├── LICENSE                         # The GNU General Public License v2
+└── README.md                       # This file
 ```
 
-  * **`config/`**: Any `.ini` file placed here, mirroring the EIB's `config/` structure, will **override** the corresponding default settings from the main EIB repository. `local.ini` is the most commonly used file here for general overrides.
-  * **`buildscript/hooks/`**: Custom scripts placed here (e.g., `post-install.sh`) will be executed as hooks during the EIB build process. The EIB automatically looks for and runs these scripts at predefined stages.
-  * **`root-config/`**: This directory allows you to directly inject files and directories into the **root filesystem of the built Endless OS image**. Any file structure under `root-config/` will be replicated exactly within the target image.
+### File Breakdown
+
+  * **`hooks/image/51-sn-collector.chroot`**: This shell script is a build hook that runs in a `chroot` environment. It sets up a **systemd service** and a script to collect the product serial number of OLPC devices on the first boot. The script is designed to run only once by creating a marker file (`/var/lib/olpc-sn-collector.done`) after completion.
 
 -----
 
-## 🚀 Usage
+## 🚀 Getting Started
 
-To build an Endless OS image using the configurations defined in this directory, navigate to your main `eos-image-builder` directory and execute the `eos-image-builder` script, specifying this directory with the `--localdir` option.
+To use these configurations, you'll need to clone both the main `eos-image-builder` repository and this `fzt-eib-configs` repository. Note that the building process requires at least **30GB** of free disk space for the Endless OS base image configuration.
 
-**Standard Build Command:**
-
-```bash
-sudo ./eos-image-builder --localdir ../fzt-eib-configs --product eos --personality base --arch amd64 master
+```
+git clone https://github.com/porfiriopaiz/eos-image-builder
 ```
 
-### Command Breakdown:
+Then clone the custom configs:
 
-  * **`sudo ./eos-image-builder`**: Invokes the Endless Image Builder script. `sudo` is often required for disk image creation and manipulation.
-  * **`--localdir ../fzt-eib-configs`**: Tells the EIB to load additional configuration files from the `fzt-eib-configs` directory. This path is relative to where you execute the `eos-image-builder` script.
-  * **`--product eos`**: Specifies the "eos" product configuration. The EIB will look for `config/product/eos.ini` in both the main EIB source and your local `fzt-eib-configs/config/product/` directory.
-  * **`--personality base`**: Specifies the "base" image personality. The EIB will load `config/personality/base.ini`.
-  * **`--arch amd64`**: Specifies the `amd64` architecture. The EIB will load `config/arch/amd64.ini`.
-  * **`master`**: Indicates that the image should be built from the `master` branch of the OSTree filesystem tree. The EIB will load `config/branch/master.ini`.
+```
+git clone https://github.com/porfiriopaiz/fzt-eib-configs
+```
+
+Then, you can build an Endless OS image using the configurations defined in this directory. You will need to execute the main `eos-image-builder` script and specify this directory using the `--localdir` option.
+
+**Example Custom Build Command:**
+
+```
+sudo ./eos-image-builder --localdir ../fzt-eib-configs --product eos --use-production-ostree eos6.0
+```
+
+### Listing Resulting Configurations
+
+You can also list the resulting configurations after applying your custom settings using the `--show-config` option:
+
+```
+sudo ./eos-image-builder --show-config --localdir ../fzt-eib-configs --product eos --use-production-ostree eos6.0
+```
+
+This command will output the merged configuration settings, allowing you to confirm that your overrides were applied correctly.
+
+**Command Breakdown:**
+
+  * `--localdir ../fzt-eib-configs`: Tells the EIB to load configurations from this directory.
+  * `--product eos`: Specifies the "eos" product configuration.
+  * `--use-production-ostree eos6.0`: This option uses the production OSTree repository with the `eos6.0` branch to build the image.
 
 -----
 
 ## 🔍 Listing Installed Applications
 
-To see a list of applications that will be installed with the image based on your current configuration, use the `--show-apps` option:
+To see a list of applications that will be installed with the image, use the `--show-apps` option:
 
-```bash
-sudo ./eos-image-builder --show-apps --localdir ../fzt-eib-configs --product eos --personality base --arch amd64 master
+```
+sudo ./eos-image-builder --show-apps --localdir ../fzt-eib-configs --product eos --use-production-ostree eos6.0
 ```
 
-This command will output the names and sizes of the Flatpak applications included in the build, allowing you to verify what's being installed. You can also use `--trim BYTES` with `--show-apps` to filter the list by minimum size.
+This command will output the names and sizes of the Flatpak applications included in the build, allowing you to verify what's being installed.
+
+-----
+
+## Locating the Build Artifacts
+
+Once the building process is complete, all the resulting files, including the final ISO image, are stored in the `/var/cache/eos-image-builder` directory. You can navigate to this directory to find the ISO file built based on your provided settings.
+
+```
+cd /var/cache/eos-image-builder
+```
+
+Under `/var/cache/eos-image-builder`, you will find all the building artifacts inside the `tmp` directory.
+
+The contents of the `tmp` directory include:
+
+`applist` `build.txt` `config.ini` `fullconfig.ini` `manifest` `mnt` `ostree.txt` `out` `packages.txt`
+
+And under `out`, you will find the ISO file.
+
+Once under the `out` directory, insert a USB key with at least **8GB** of capacity and connect it to your PC. Then, run the `lsblk` command to identify the USB key's device name.
+
+```
+lsblk
+```
+
+Once you have identified the device (e.g., `/dev/sdb`), use the following command to write the ISO file to the USB. **Be careful to replace `/dev/sdb` with the correct device name for your USB key.**
+
+```
+sudo dd bs=4M if=eos-eos6.0-amd64-amd64.date-time.base.iso of=/dev/sdb conv=fsync oflag=direct status=progress
+```
