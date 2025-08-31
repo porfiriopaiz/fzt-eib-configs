@@ -4,9 +4,10 @@ echo "Copying first-run service and script to image..."
 # Create the necessary directories inside the image.
 mkdir -p /etc/systemd/system
 mkdir -p /usr/local/bin
+mkdir -p /etc/metrics
 
 # Creates the systemd service that triggers the script to collect the serial
-# number on OLPC devices
+# number on OLPC devices.
 cat > /etc/systemd/system/olpc-sn-collector.service <<EOF
 [Unit]
 Description=Collects OLPC device serial number
@@ -23,7 +24,7 @@ StandardOutput=journal
 WantedBy=multi-user.target
 EOF
 
-# Creates the script that collects the serial number of OLPC devices
+# Creates the script that collects the serial number of OLPC devices.
 cat > /usr/local/bin/olpc-sn-collector <<EOF
 #!/bin/bash
 
@@ -35,11 +36,24 @@ fi
 
 # Your one-time task goes here.
 echo "Running olpc-sn-collector one-time startup task with internet connection..."
-cat /sys/class/dmi/id/product_serial > /tmp/device-sn.txt
+
+# Collect the device serial number.
+SERIAL=$(cat /sys/class/dmi/id/product_serial)
+
+# Create the location configuration file with the collected serial number.
+cat > /etc/metrics/location.conf <<EOL
+[Label]
+facility = Escuela Demo
+city = Tipitapa
+state = Managua
+device_serial = $SERIAL
+EOL
 
 # Mark the task as complete so it doesn't run again.
 touch /var/lib/olpc-sn-collector.done
 EOF
+
+# Grant execution permission to the script.
 chmod +x /usr/local/bin/olpc-sn-collector
 
 # Enable the service for the next boot.
