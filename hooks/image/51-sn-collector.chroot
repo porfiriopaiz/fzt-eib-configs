@@ -23,6 +23,16 @@ StandardOutput=journal
 WantedBy=multi-user.target
 EOF
 
+# Create the location configuration file that will contain the device serial
+# number.
+cat > /etc/metrics/location.conf <<EOF
+[Label]
+facility = Escuela Demo
+city = Tipitapa
+state = Managua
+device_serial = 
+EOF
+
 # Creates the script that collects the serial number of OLPC devices.
 cat > /usr/local/bin/olpc-sn-collector <<EOF
 #!/bin/bash
@@ -33,20 +43,11 @@ if [ -f /var/lib/olpc-sn-collector.done ]; then
     exit 0
 fi
 
-# Your one-time task goes here.
-echo "Running olpc-sn-collector one-time startup task with internet connection..."
+# Capture the serial number into a variable
+SERIAL_NUMBER=$(cat /sys/class/dmi/id/product_serial)
 
-# Collect the device serial number.
-SERIAL=$(cat /sys/class/dmi/id/product_serial)
-
-# Create the location configuration file with the collected serial number.
-cat > /etc/metrics/location.conf <<EOL
-[Label]
-facility = Escuela Demo
-city = Tipitapa
-state = Managua
-device_serial = $SERIAL
-EOL
+# Use sed to write the serial number.
+sed -i "s/^device_serial = .*/device_serial = $SERIAL_NUMBER/" /etc/metrics/location.conf
 
 # Mark the task as complete so it doesn't run again.
 touch /var/lib/olpc-sn-collector.done
