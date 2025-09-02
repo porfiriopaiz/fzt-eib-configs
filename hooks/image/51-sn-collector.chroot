@@ -8,11 +8,10 @@ mkdir -p /etc/metrics
 
 # Creates the systemd service that triggers the script to collect the serial
 # number on OLPC devices.
+#!/bin/bash
 cat > /etc/systemd/system/olpc-sn-collector.service <<EOF
 [Unit]
 Description=Collects OLPC device serial number
-Wants=network-online.target
-After=network-online.target
 
 [Service]
 Type=oneshot
