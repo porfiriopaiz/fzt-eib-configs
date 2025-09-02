@@ -23,6 +23,69 @@ StandardOutput=journal
 WantedBy=multi-user.target
 EOF
 
+# Creates the script that collects the serial number of OLPC devices.
+cat > /usr/local/bin/olpc-sn-collector <<'EOF'
+#!/bin/bash
+
+# Define the file paths for the serial number source, the temporary file,
+# the configuration file, and the completion flag.
+SERIAL_SOURCE="/sys/class/dmi/id/product_serial"
+TEMP_SERIAL_FILE="/tmp/device-sn.txt"
+CONFIG_FILE="/etc/metrics/location.conf"
+DONE_FLAG="/var/lib/olpc-sn-collector.done"
+
+# Check if the task has already been completed by looking for the flag file.
+if [ -f "$DONE_FLAG" ]; then
+    echo "Serial number collection script has already executed. Exiting."
+    exit 0
+fi
+
+echo "Running one-time startup task to update the device serial number..."
+
+# Step 1: Read the serial number from the system and write it to a temporary file.
+# This creates the file and stores the serial number in it.
+if [ -f "$SERIAL_SOURCE" ]; then
+    cat "$SERIAL_SOURCE" > "$TEMP_SERIAL_FILE"
+else
+    echo "Error: Serial number source '$SERIAL_SOURCE' not found. Exiting."
+    exit 1
+fi
+
+# Step 2: Read from the temporary file and use its content to update the config file.
+# First, check if the temporary file and the destination file exist.
+if [ -f "$TEMP_SERIAL_FILE" ] && [ -f "$CONFIG_FILE" ]; then
+    # Read the serial number from the temporary file into a variable.
+    # The 'tr' command is used to remove any potential leading/trailing whitespace or newlines.
+    SERIAL_NUMBER=$(cat "$TEMP_SERIAL_FILE" | tr -d '[:space:]')
+    
+    # Use 'sed' to perform an in-place replacement.
+    # The command finds the line that starts with 'device_serial = ' and replaces the
+    # entire line with the new value from our variable.
+    sed -i "s/^device_serial = .*/device_serial = $SERIAL_NUMBER/" "$CONFIG_FILE"
+    
+    echo "Successfully updated '$CONFIG_FILE'."
+else
+    echo "Error: One or both required files not found. Check if '$TEMP_SERIAL_FILE' and '$CONFIG_FILE' exist."
+    exit 1
+fi
+
+# Clean up the temporary file, as it's no longer needed.
+if [ -f "$TEMP_SERIAL_FILE" ]; then
+    rm "$TEMP_SERIAL_FILE"
+fi
+
+# Mark the task as complete by creating a flag file.
+touch "$DONE_FLAG"
+
+echo "Task completed and marked as done."
+
+# Exit with a success status code.
+exit 0
+EOF
+
+# Grant execution permission to the script.
+chmod +x /usr/local/bin/olpc-sn-collector
+
 # Create the location configuration file that will contain the device serial
 # number.
 cat > /etc/metrics/location.conf <<EOF
@@ -32,29 +95,6 @@ city = Tipitapa
 state = Managua
 device_serial = 
 EOF
-
-# Creates the script that collects the serial number of OLPC devices.
-cat > /usr/local/bin/olpc-sn-collector <<EOF
-#!/bin/bash
-
-# Check if the task has already been run.
-if [ -f /var/lib/olpc-sn-collector.done ]; then
-    echo "olpc-sn-collector script has already executed. Exiting."
-    exit 0
-fi
-
-# Capture the serial number into a variable
-SERIAL_NUMBER=$(cat /sys/class/dmi/id/product_serial)
-
-# Use sed to write the serial number.
-sed -i "s/^device_serial = .*/device_serial = $SERIAL_NUMBER/" /etc/metrics/location.conf
-
-# Mark the task as complete so it doesn't run again.
-touch /var/lib/olpc-sn-collector.done
-EOF
-
-# Grant execution permission to the script.
-chmod +x /usr/local/bin/olpc-sn-collector
 
 # Enable the service for the next boot.
 # Note: The systemd daemon itself is not running during this hook. This command
