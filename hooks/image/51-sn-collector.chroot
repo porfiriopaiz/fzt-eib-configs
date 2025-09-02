@@ -34,7 +34,7 @@ device_serial =
 EOF
 
 # Creates the script that collects the serial number of OLPC devices.
-cat > /usr/local/bin/olpc-sn-collector <<EOF
+cat > /usr/local/bin/olpc-sn-collector <<'EOF'
 #!/bin/bash
 
 # Check if the task has already been run.
